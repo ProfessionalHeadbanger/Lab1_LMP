@@ -1,12 +1,97 @@
-//Дан текстовый файл input.txt, в котором хранятся целые числа.
-//Создать список по принципу очереди. 
-//Найти вторую подпоследовательность, состоящую из простых чисел. 
-//Переставить эту подпоследовательность после первого элемента, кратного 4. 
-//Полученную последовательность записать в текстовый файл output.txt. 
-//Если искомой подпоследовательности нет, то помимо последовательности в файл записать соответствующее сообщение.
+//Р”Р°РЅ С‚РµРєСЃС‚РѕРІС‹Р№ С„Р°Р№Р» input.txt, РІ РєРѕС‚РѕСЂРѕРј С…СЂР°РЅСЏС‚СЃСЏ С†РµР»С‹Рµ С‡РёСЃР»Р°.
+//РЎРѕР·РґР°С‚СЊ СЃРїРёСЃРѕРє РїРѕ РїСЂРёРЅС†РёРїСѓ РѕС‡РµСЂРµРґРё. 
+//РќР°Р№С‚Рё РІС‚РѕСЂСѓСЋ РїРѕРґРїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ, СЃРѕСЃС‚РѕСЏС‰СѓСЋ РёР· РїСЂРѕСЃС‚С‹С… С‡РёСЃРµР». 
+//РџРµСЂРµСЃС‚Р°РІРёС‚СЊ СЌС‚Сѓ РїРѕРґРїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ РїРѕСЃР»Рµ РїРµСЂРІРѕРіРѕ СЌР»РµРјРµРЅС‚Р°, РєСЂР°С‚РЅРѕРіРѕ 4. 
+//РџРѕР»СѓС‡РµРЅРЅСѓСЋ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ Р·Р°РїРёСЃР°С‚СЊ РІ С‚РµРєСЃС‚РѕРІС‹Р№ С„Р°Р№Р» output.txt. 
+//Р•СЃР»Рё РёСЃРєРѕРјРѕР№ РїРѕРґРїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё РЅРµС‚, С‚Рѕ РїРѕРјРёРјРѕ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚Рё РІ С„Р°Р№Р» Р·Р°РїРёСЃР°С‚СЊ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРµ СЃРѕРѕР±С‰РµРЅРёРµ.
 
 #include "My_List.h"
 #include <Windows.h>
+
+bool task(LIST& list)
+{
+	auto is_simple = [](int first, int second)
+	{
+		bool prime = true;
+		if ((first == 0 || first == 1) && (second == 0 || second == 1))
+		{
+			prime = false;
+		}
+		else
+		{
+			for (int i = 2; i <= first / 2; ++i)
+			{
+				if (first % i == 0)
+				{
+					prime = false;
+					break;
+				}
+			}
+			for (int i = 2; i <= second / 2; ++i)
+			{
+				if (second % i == 0)
+				{
+					prime = false;
+					break;
+				}
+			}
+		}
+		return prime;
+	};
+
+	bool check = false;
+	ptrNODE beg = nullptr, end = nullptr, head = list.get_head();
+	ptrNODE p = head;
+	ptrNODE p1 = head;
+	ptrNODE kr4 = nullptr;
+	int counter = 0;
+	while (p1->next)
+	{
+		if (*p1->next->info % 4 == 0 && kr4 == nullptr)
+		{
+			kr4 = p1->next;
+		}
+		p1 = p1->next;
+	}
+	while (p->next && p->next->next)
+	{
+		if (is_simple(*p->next->info, *p->next->next->info) && (p == head || !is_simple(*p->info, *p->next->info)))
+		{
+			beg = p;
+			end = nullptr;
+		}
+		else
+		{
+			if (is_simple(*p->info, *p->next->info) && !is_simple(*p->next->info, *p->next->next->info))
+			{
+				end = p->next;
+				counter++;
+			}
+		}
+		p = p->next;
+		if (counter == 2)
+		{
+			break;
+		}
+	}
+	if (beg && !end)
+	{
+		end = p->next;
+	}
+	if (beg)
+	{
+		if (end != kr4)
+		{
+			ptrNODE tmp = beg->next;
+			beg->next = end->next;
+			end->next = kr4->next;
+			kr4->next = tmp;
+			list.set_tail(end);
+		}
+		check = true;
+	}
+	return check;
+}
 
 int main()
 {
@@ -18,13 +103,14 @@ int main()
 	{
 		LIST list;
 		std::ifstream file_in("input.txt");
+		std::ofstream file_out("output.txt");
 		if (file_in)
 		{
 			bool input = true;
 			while (input)
 			{
 				char choice;
-				std::cout << "Выберите, как будет создаваться список (1 - стек, 2 - очередь, 3 - упорядоченно): "; std::cin >> choice;
+				std::cout << "Р’С‹Р±РµСЂРёС‚Рµ, РєР°Рє Р±СѓРґРµС‚ СЃРѕР·РґР°РІР°С‚СЊСЃСЏ СЃРїРёСЃРѕРє (1 - СЃС‚РµРє, 2 - РѕС‡РµСЂРµРґСЊ, 3 - СѓРїРѕСЂСЏРґРѕС‡РµРЅРЅРѕ): "; std::cin >> choice;
 				switch (choice)
 				{
 				case '1':
@@ -40,25 +126,34 @@ int main()
 					input = false;
 					break;
 				default:
-					std::cout << "Неверный ввод" << std::endl;
+					std::cout << "РќРµРІРµСЂРЅС‹Р№ РІРІРѕРґ" << std::endl;
 					input = true;
 					break;
 				}
 			}
+			if (task(list))
+			{
+				list.print(file_out, "РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРЅР°СЏ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕСЃС‚СЊ: \n");
+			}
+			else
+			{
+				list.print(file_out);
+			}
 		}
 
 		file_in.close();
+		file_out.close();
 
 		char choice;
 		bool label = true;
 		while (label)
 		{
-			std::cout << "Желаете начать заново или выйти? 1 - заново, 2 - выйти ";
+			std::cout << "Р–РµР»Р°РµС‚Рµ РЅР°С‡Р°С‚СЊ Р·Р°РЅРѕРІРѕ РёР»Рё РІС‹Р№С‚Рё? 1 - Р·Р°РЅРѕРІРѕ, 2 - РІС‹Р№С‚Рё ";
 			std::cin >> choice;
 			switch (choice)
 			{
 			default:
-				std::cout << "Неверный ввод!" << std::endl;
+				std::cout << "РќРµРІРµСЂРЅС‹Р№ РІРІРѕРґ!" << std::endl;
 				label = true;
 				break;
 			case '1':
