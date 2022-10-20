@@ -10,86 +10,86 @@
 
 bool task(LIST& list)
 {
-	auto is_simple = [](int first, int second)
+	auto is_prime_pair = [](int first, int second)
 	{
-		bool prime = true;
-		if ((first == 0 || first == 1) && (second == 0 || second == 1))
+		auto is_prime_alone = [](int number)
 		{
-			prime = false;
-		}
-		else
-		{
-			for (int i = 2; i <= first / 2; ++i)
+			bool result = number != 0 && number != 1;
+			for (int i = 2; i <= number / 2 && result; ++i)
 			{
-				if (first % i == 0)
+				if (number % i == 0)
 				{
-					prime = false;
-					break;
+					result = false;
 				}
 			}
-			for (int i = 2; i <= second / 2; ++i)
-			{
-				if (second % i == 0)
-				{
-					prime = false;
-					break;
-				}
-			}
-		}
+			return result;
+		};
+		bool prime = is_prime_alone(first) && is_prime_alone(second);
 		return prime;
 	};
 
 	bool check = false;
 	ptrNODE beg = nullptr, end = nullptr, head = list.get_head();
 	ptrNODE p = head;
-	ptrNODE p1 = head;
 	ptrNODE kr4 = nullptr;
+	ptrNODE tail = list.get_tail();
 	int counter = 0;
-	while (p1->next)
+
+	while (p->next && p->next->next && counter != 2)
 	{
-		if (*p1->next->info % 4 == 0 && kr4 == nullptr)
-		{
-			kr4 = p1->next;
-		}
-		p1 = p1->next;
-	}
-	while (p->next && p->next->next)
-	{
-		if (is_simple(*p->next->info, *p->next->next->info) && (p == head || !is_simple(*p->info, *p->next->info)))
+		if (is_prime_pair(*p->next->info, *p->next->next->info) && (p == head || !is_prime_pair(*p->info, *p->next->info)))
 		{
 			beg = p;
 			end = nullptr;
 		}
 		else
 		{
-			if (is_simple(*p->info, *p->next->info) && !is_simple(*p->next->info, *p->next->next->info))
+			if (is_prime_pair(*p->info, *p->next->info) && !is_prime_pair(*p->next->info, *p->next->next->info))
 			{
 				end = p->next;
 				counter++;
 			}
 		}
+		if (*p->next->info % 4 == 0 && kr4 == nullptr)
+		{
+			kr4 = p->next;
+		}
 		p = p->next;
-		if (counter == 2)
+	}
+	if (counter == 2)
+	{
+		while (p->next && !kr4)
 		{
-			break;
+			if (*p->next->info % 4 == 0)
+			{
+				kr4 = p->next;
+			}
+		}
+		if (beg && !end)
+		{
+			end = p->next;
+		}
+		if (kr4)
+		{
+			if (end != kr4)
+			{
+				if (kr4 == tail)
+				{
+					list.set_tail(end);
+				}
+				if (end == tail)
+				{
+					list.set_tail(beg);
+				}
+				ptrNODE tmp = beg->next;
+				beg->next = end->next;
+				end->next = kr4->next;
+				kr4->next = tmp;
+			}
+			check = true;
 		}
 	}
-	if (beg && !end)
-	{
-		end = p->next;
-	}
-	if (beg)
-	{
-		if (end != kr4)
-		{
-			ptrNODE tmp = beg->next;
-			beg->next = end->next;
-			end->next = kr4->next;
-			kr4->next = tmp;
-			list.set_tail(end);
-		}
-		check = true;
-	}
+	
 	return check;
 }
 
